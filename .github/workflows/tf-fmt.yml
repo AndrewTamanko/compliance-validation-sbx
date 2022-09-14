@@ -1,0 +1,33 @@
+name: terraform fmt
+on:
+  push:
+    branches-ignore:
+      - 'prod'
+      - 'stage'
+      - 'qa'
+  pull_request:
+jobs:
+  build:
+    name: tf-fmt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code into the directory
+        uses: actions/checkout@v2
+
+      - name: Download terraform
+        run: curl -kLs https://releases.hashicorp.com/terraform/1.1.7/terraform_1.1.7_linux_amd64.zip -o /tmp/terraform.zip
+
+      - name: Set path
+        run: export PATH="/tmp/bin:$PATH"
+
+      - name: Create bin dir
+        run: mkdir /tmp/bin
+
+      - name: Unzip terraform
+        run: sudo unzip /tmp/terraform.zip terraform -d /tmp/bin
+
+      - name: setup tflint
+        run: |
+          curl -L "$(curl -s https://api.github.com/repos/terraform-linters/tflint/releases/latest | grep -o -E "https://.+?_linux_amd64.zip")" > tflint.zip && unzip tflint.zip && rm tflint.zip && sudo install tflint /usr/local/bin/
+      - name: Run Terraform fmt
+        run: /tmp/bin/terraform fmt -list=true -recursive -diff -check
